@@ -1261,7 +1261,9 @@
         message += `\n\nPayment Proof: I will attach my payment screenshot/transaction message here.`;
       }
 
-    
+      message += `\nIdea / Request Details: ${data.details || "I would like to share an idea with EricsVault Hub."}`;
+      return message;
+    }
 
    function openWhatsAppForOrder(orderId) {
   const order = orders.find(item => item.id === orderId);
