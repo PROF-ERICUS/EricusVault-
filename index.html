@@ -1213,19 +1213,33 @@
       return message;
     }
 
-    function openWhatsAppForOrder(orderId) {
-      const order = orders.find(item => item.id === orderId);
-      if (!order) return;
+   function openWhatsAppForOrder(orderId) {
+  const order = orders.find(item => item.id === orderId);
 
-      if (order.status === "Discarded Order") {
-        alert("This order was discarded because payment was not completed.");
-        return;
-      }
+  if (!order) return;
 
-      const messageType = order.status === "Pending USSD Payment" ? "ussd" : "paystack";
-      const whatsappURL = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(buildWhatsAppMessage(order, messageType));
-      window.open(whatsappURL, "_blank");
-    }
+  if (order.status === "Discarded Order") {
+    alert("This order was discarded because payment was not completed.");
+    return;
+  }
+
+  let messageType = "paystack";
+
+  if (
+    order.paymentMethod &&
+    order.paymentMethod.toLowerCase().includes("ussd")
+  ) {
+    messageType = "ussd";
+  }
+
+  const whatsappURL =
+    "https://wa.me/" +
+    WHATSAPP_NUMBER +
+    "?text=" +
+    encodeURIComponent(buildWhatsAppMessage(order, messageType));
+
+  window.open(whatsappURL, "_blank");
+}
 
     function openWhatsAppSupport() {
       const selectedOrder = getSelectedOrder();
