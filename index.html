@@ -995,11 +995,20 @@
             <td><span class="${getStatusClass(order.status)}">${order.status}</span></td>
             <td>${order.date}</td>
             <td>
-              ${order.status !== "Discarded Order" ? `
+              ${order.status === "Pending USSD Payment" ? `
+                <button class="btn btn-primary btn-sm" onclick="markAsPaid('${order.id}')">
+                  <i class="fa-solid fa-check"></i> I Have Paid - Send Details
+                </button>
+              ` : ""}
+
+              ${order.status === "Paid" ? `
                 <button class="btn btn-sm btn-whatsapp-outline" onclick="openWhatsAppForOrder('${order.id}')">
                   <i class="fa-brands fa-whatsapp"></i> Send Details
                 </button>
-              ` : `<small>No WhatsApp action</small><br>`}
+              ` : ""}
+
+              ${order.status === "Discarded Order" ? `<small>No WhatsApp action</small><br>` : ""}
+
               <button class="btn-danger" onclick="deleteOrder('${order.id}')">
                 Delete
               </button>
@@ -1033,6 +1042,26 @@
       if (!confirm("Do you want to delete this order record?")) return;
       orders = orders.filter(order => order.id !== orderId);
       saveOrders();
+    }
+
+    function markAsPaid(orderId) {
+      const order = orders.find(item => item.id === orderId);
+
+      if (!order) return;
+
+      if (order.status !== "Pending USSD Payment") {
+        alert("This order is already paid or was discarded.");
+        return;
+      }
+
+      if (!confirm("Have you completed the USSD payment? Click OK to mark this order as paid and send your details to WhatsApp.")) return;
+
+      order.status = "Paid";
+      order.date = new Date().toLocaleString();
+      saveOrders();
+
+      alert("Order marked as paid. WhatsApp will open now so you can send your details and payment proof for fast processing.");
+      openWhatsAppForOrder(order.id);
     }
 
     function clearOrders() {
@@ -1178,11 +1207,8 @@
           "Dial: " + USSD_CODE + "\n" +
           "Amount: " + formatMoney(ussdOrder.amount) + "\n" +
           "Payment Name: EricsVault Hub\n\n" +
-          "After payment, send order details and payment proof through WhatsApp for fast processing."
+          "After making payment, go to Order Records and click 'I Have Paid - Send Details' to send your order details and payment proof through WhatsApp for fast processing."
         );
-
-        const whatsappURL = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(buildWhatsAppMessage(ussdOrder, "ussd"));
-        window.open(whatsappURL, "_blank");
 
         orderForm.reset();
         updateService("MTN Data Bundle");
@@ -1255,6 +1281,7 @@
     });
 
     window.deleteOrder = deleteOrder;
+    window.markAsPaid = markAsPaid;
     window.openWhatsAppForOrder = openWhatsAppForOrder;
 
     updateDashboard();
